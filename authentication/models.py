@@ -236,7 +236,7 @@ class User(AbstractBaseUser):
     is_superuser = models.BooleanField(default=False)
 
     # role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
-    role = models.CharField(max_length=255, null=True, blank=True,default='admin')
+    role = models.CharField(max_length=255, null=True, blank=True)
 
     street_address_one = models.CharField(max_length=255, null=True, blank=True)
     street_address_two = models.CharField(max_length=255, null=True, blank=True)

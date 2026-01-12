@@ -4,6 +4,15 @@ from django.urls import path
 urlpatterns = [
 	
 	path('api/v1/user/login/', views.MyTokenObtainPairView.as_view(), name='login'),
+	
+	# Superadmin endpoints
+	path('api/v1/superadmin/login/', views.SuperAdminTokenObtainPairView.as_view(), name='superadmin-login'),
+	path('api/v1/superadmin/send-reset-otp/', views.sendSuperAdminResetOTP, name='superadmin-send-reset-otp'),
+	path('api/v1/superadmin/verify-reset-otp/', views.verifySuperAdminResetOTP, name='superadmin-verify-reset-otp'),
+	path('api/v1/superadmin/set-new-password-after-otp/', views.setSuperAdminNewPasswordAfterOTP, name='superadmin-set-new-password'),
+
+	# Superadmin profile update (image and full_name)
+	path('api/v1/superadmin/uploadimage/<int:pk>', views.superadminImageUpload),
 
 	path('api/v1/user/all/', views.getAllUser),
 
@@ -16,11 +25,7 @@ urlpatterns = [
 	path('api/v1/user/search/', views.searchUser),
 
 	path('api/v1/user/create/', views.createUser),
-    
-	# 7 days after registration, the user will be deleted if not activated
-    
-	path('api/v1/register/', views.registerUser),
- 
+    path('api/v1/register/', views.registerUser),
  	path('activate/<uidb64>/<token>/', views.activate_user, name='activate-user'),
 
 	path('api/v1/user/update/<int:pk>', views.updateUser),

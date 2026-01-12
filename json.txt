@@ -1,0 +1,232 @@
+{
+
+    "trip": {
+
+        "title": "2-Day Getaway to Chittagong",
+
+        "image_url": "https://images.unsplash.com/photo-1652969209299-25c19cf42cad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4MzY5ODF8MHwxfHNlYXJjaHwxfHxDaGl0YWdvbmclMjB0cmF2ZWwlMjBzY2VuZXJ5fGVufDB8MHwxfHwxNzY2MTYzNDczfDA&ixlib=rb-4.1.0&q=80&w=1080%22,
+
+        "duration": {
+
+            "days": 2,
+
+            "nights": 1
+
+        },
+
+        "spots_count": 6,
+
+        "categories": [
+
+            "🏖️ Beach",
+
+            "🌲 Nature",
+
+            "🍽️ Food"
+
+        ],
+
+        "description": "Discover the vibrant culture, pristine beaches, and lush landscapes of Chittagong in this 2-day itinerary. Dive into local delicacies and explore both urban and natural wonders.",
+
+        "summary_itinerary": [
+
+            {
+
+                "day": "Day 1",
+
+                "title": "Urban Exploration & Beach Relaxation",
+
+                "activities": [
+
+                    "Breakfast at Café Milano",
+
+                    "Visit Ethnological Museum",
+
+                    "Lunch at Handi Restaurant",
+
+                    "Relax at Patenga Beach"
+
+                ]
+
+            },
+
+            {
+
+                "day": "Day 2",
+
+                "title": "Nature & Historic Sites",
+
+                "activities": [
+
+                    "Morning at Foy's Lake",
+
+                    "Explore Kaptai National Park",
+
+                    "Lunch at Mermaid Eco Resort",
+
+                    "Visit Chittagong War Cemetery"
+
+                ]
+
+            }
+
+        ],
+
+        "buttons": {
+
+            "view_details": true,
+
+            "share": true,
+
+            "save": true,
+
+            "regenerate_plan": true
+
+        }
+
+    },
+
+    "details": {
+
+        "static_map": {
+
+            "image_url": "https://maps.googleapis.com/maps/api/staticmap?center=Chitagong&zoom=12&size=600x400&maptype=roadmap&key=AIzaSyDwQ1UihcEcPSxPk2vunnUEAeTM0Xgx9n0%22,
+
+            "description": "Map showcasing the major stops in Chittagong including Patenga Beach, Foy's Lake, and more."
+
+        },
+
+        "tour_spots_title": "Must-Visit Places in Chittagong",
+
+        "tour_spots": [
+
+            "Patenga Beach",
+
+            "Ethnological Museum",
+
+            "Foy's Lake",
+
+            "Kaptai National Park",
+
+            "Chittagong War Cemetery",
+
+            "Mermaid Eco Resort"
+
+        ],
+
+        "days": [
+
+            {
+
+                "day": "Day 1",
+
+                "title": "Urban Exploration & Beach Relaxation",
+
+                "image_url": "https://images.unsplash.com/photo-1512311917751-085807ac9419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4MzY5ODF8MHwxfHNlYXJjaHwxfHxDaGl0YWdvbmclMjBVcmJhbiUyMEV4cGxvcmF0aW9uJTIwJTI2JTIwQmVhY2glMjBSZWxheGF0aW9ufGVufDB8MHwxfHwxNzY2MTYzNDc1fDA&ixlib=rb-4.1.0&q=80&w=1080%22,
+
+                "schedule": [
+
+                    {
+
+                        "time": "Morning",
+
+                        "icon": "🍽️",
+
+                        "description": "Start your day with a hearty breakfast at Café Milano, known for its delicious pastries and coffee."
+
+                    },
+
+                    {
+
+                        "time": "Midday",
+
+                        "icon": "🏛️",
+
+                        "description": "Visit the Ethnological Museum for a glimpse into the diverse cultures of Bangladesh."
+
+                    },
+
+                    {
+
+                        "time": "Afternoon",
+
+                        "icon": "🍽️",
+
+                        "description": "Enjoy a traditional Bangladeshi lunch at Handi Restaurant, famous for its biryani and kebabs."
+
+                    },
+
+                    {
+
+                        "time": "Evening",
+
+                        "icon": "🏖️",
+
+                        "description": "Relax at Patenga Beach, take a stroll, and enjoy the sunset over the Bay of Bengal."
+
+                    }
+
+                ]
+
+            },
+
+            {
+
+                "day": "Day 2",
+
+                "title": "Nature & Historic Sites",
+
+                "image_url": "https://images.unsplash.com/photo-1751963928272-73a0c202badf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4MzY5ODF8MHwxfHNlYXJjaHw0fHxDaGl0YWdvbmclMjBOYXR1cmUlMjAlMjYlMjBIaXN0b3JpYyUyMFNpdGVzfGVufDB8MHwxfHwxNzY2MTYzNDc3fDA&ixlib=rb-4.1.0&q=80&w=1080%22,
+
+                "schedule": [
+
+                    {
+
+                        "time": "Morning",
+
+                        "icon": "🌲",
+
+                        "description": "Head to Foy's Lake for a serene boat ride and scenic views."
+
+                    },
+
+                    {
+
+                        "time": "Midday",
+
+                        "icon": "🌳",
+
+                        "description": "Explore Kaptai National Park, home to diverse flora and fauna. Ideal for nature walks."
+
+                    },
+
+                    {
+
+                        "time": "Afternoon",
+
+                        "icon": "🍽️",
+
+                        "description": "Have a delightful lunch at Mermaid Eco Resort, nestled amidst nature."
+
+                    },
+
+                    {
+
+                        "time": "Evening",
+
+                        "icon": "⚔️",
+
+                        "description": "Visit the Chittagong War Cemetery, a peaceful place honoring WWII soldiers."
+
+                    }
+
+                ]
+
+            }
+
+        ]
+
+    }
+
+}
+ 

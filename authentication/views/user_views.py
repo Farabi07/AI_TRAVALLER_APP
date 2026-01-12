@@ -83,6 +83,29 @@ class MyTokenObtainPairView(TokenObtainPairView):
 		pass
 
 
+# Superadmin Login Serializer
+class SuperAdminTokenObtainPairSerializer(TokenObtainPairSerializer):
+	def validate(self, attrs):
+		data = super().validate(attrs)
+		
+		# Check if user is superuser
+		if not self.user.is_superuser:
+			from rest_framework.exceptions import AuthenticationFailed
+			raise AuthenticationFailed('Only superusers can login through this endpoint.')
+		
+		serializer = AdminUserListSerializer(self.user).data
+		
+		for k, v in serializer.items():
+			data[k] = v
+		
+		return data
+
+
+# Superadmin Login View
+class SuperAdminTokenObtainPairView(TokenObtainPairView):
+	serializer_class = SuperAdminTokenObtainPairSerializer
+
+
 
 @extend_schema(
 	parameters=[
@@ -418,6 +441,75 @@ def userImageUpload(request, pk):
         response = {'detail': f'An error occurred: {str(e)}'}
         return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@permission_classes([IsAuthenticated])
+@api_view(['PATCH'])
+def superadminImageUpload(request, pk):
+	"""
+	Update profile image and/or full_name for a superuser.
+	- Only requests from an authenticated superuser are allowed.
+	- The target user (pk) must be a superuser.
+	Returns the updated `image_url` and `full_name`.
+	"""
+	try:
+		# Only allow superusers to perform this action
+		if not getattr(request.user, 'is_superuser', False):
+			return Response({'detail': 'Only superusers can perform this action.'}, status=status.HTTP_403_FORBIDDEN)
+
+		user = User.objects.get(pk=pk)
+
+		# Target must be a superuser
+		if not getattr(user, 'is_superuser', False):
+			return Response({'detail': "Target user is not a superuser."}, status=status.HTTP_400_BAD_REQUEST)
+
+		# Get the uploaded image from request.FILES (if present)
+		image = request.FILES.get('image')
+		# Get the full name from request.data (if present)
+		full_name = request.data.get('full_name')
+
+		# Update image if provided
+		if image:
+			user.image = image
+		# Update full_name if provided
+		if full_name:
+			user.full_name = full_name
+
+		# If neither image nor full_name is provided, return an error
+		if not image and not full_name:
+			response = {'detail': "Please provide either an image or a full name"}
+			return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+		# Save the user instance with the updated fields
+		user.save()
+
+		# Build response data: absolute URL when request available
+		request_obj = request
+		image_url = None
+		if user.image:
+			try:
+				file_url = user.image.url
+				if hasattr(request_obj, 'build_absolute_uri'):
+					image_url = request_obj.build_absolute_uri(file_url)
+				else:
+					image_url = file_url
+			except Exception:
+				image_url = getattr(user.image, 'url', None)
+
+		response_data = {
+			'image_url': image_url,
+			'full_name': user.full_name
+		}
+
+		return Response(response_data, status=status.HTTP_200_OK)
+
+	except ObjectDoesNotExist:
+		response = {'detail': f"User id - {pk} doesn't exist"}
+		return Response(response, status=status.HTTP_404_NOT_FOUND)
+
+	except Exception as e:
+		response = {'detail': f'An error occurred: {str(e)}'}
+		return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @extend_schema(request=AdminUserSerializer, responses=AdminUserSerializer)
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -723,6 +815,67 @@ def sendResetOTP(request):
         [email],
     )
     return Response({'message': 'OTP sent to your email.'})
+
+
+# Superadmin Password Reset - Send OTP
+@api_view(['POST'])
+def sendSuperAdminResetOTP(request):
+    email = request.data.get('email')
+    user = User.objects.filter(email=email, is_superuser=True).first()
+    if not user:
+        return Response({'error': 'Superuser not found with this email'}, status=404)
+    otp = str(random.randint(10000, 99999))  # 5-digit OTP
+    PasswordResetOTP.objects.create(user=user, otp=otp)
+    send_mail(
+        'Superadmin Password Reset OTP',
+        f'Your OTP code is: {otp}',
+        None,  # Uses DEFAULT_FROM_EMAIL
+        [email],
+    )
+    return Response({'message': 'OTP sent to superadmin email.'})
+
+
+# Superadmin Password Reset - Verify OTP
+@api_view(['POST'])
+def verifySuperAdminResetOTP(request):
+    email = request.data.get('email')
+    otp = request.data.get('otp')
+    user = User.objects.filter(email=email, is_superuser=True).first()
+    if not user:
+        return Response({'error': 'Superuser not found'}, status=404)
+    otp_obj = PasswordResetOTP.objects.filter(user=user, otp=otp).order_by('-created_at').first()
+    if not otp_obj or otp_obj.is_expired():
+        return Response({'error': 'Invalid or expired OTP'}, status=400)
+    # Generate a reset token and save it
+    reset_token = uuid.uuid4()
+    otp_obj.reset_token = reset_token
+    otp_obj.save()
+    return Response({
+        'message': 'OTP verified. Now you can set your new password.',
+        'reset_token': str(reset_token)
+    })
+
+
+# Superadmin Password Reset - Set New Password
+@api_view(['POST'])
+def setSuperAdminNewPasswordAfterOTP(request):
+    reset_token = request.data.get('reset_token')
+    new_password = request.data.get('new_password')
+    confirm_password = request.data.get('confirm_password')
+    otp_obj = PasswordResetOTP.objects.filter(reset_token=reset_token).order_by('-created_at').first()
+    if not otp_obj:
+        return Response({'error': 'Invalid or expired reset token'}, status=400)
+    if not otp_obj.user.is_superuser:
+        return Response({'error': 'This token is not for a superuser'}, status=403)
+    if not new_password or not confirm_password:
+        return Response({'error': 'Both new_password and confirm_password are required.'}, status=400)
+    if new_password != confirm_password:
+        return Response({'error': 'Passwords do not match.'}, status=400)
+    user = otp_obj.user
+    user.set_password(new_password)
+    user.save()
+    otp_obj.delete()
+    return Response({'message': 'Superadmin password reset successful'})
 
 
 
