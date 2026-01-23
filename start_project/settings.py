@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.apple',
     'rest_framework_simplejwt.token_blacklist',
     'storages',
     #local
