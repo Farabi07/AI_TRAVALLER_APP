@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.static import serve
 from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView)
-from .views import CustomGoogleLogin, CustomAppleLogin
+from .views import CustomGoogleLogin
 from . import views
 from django.conf import settings # new
 from  django.conf.urls.static import static #new
@@ -41,8 +41,6 @@ urlpatterns = [
     path('auth/dj-rest-auth/registration/', include('dj_rest_auth.registration.urls')),
     # path('auth/dj-rest-auth/social/', include('allauth.socialaccount.urls')),
     path('dj-rest-auth/google/', CustomGoogleLogin.as_view(), name='google_login'),
-    # path('apple/', CustomAppleLogin.as_view(), name='apple-login'),
-    path('dj-rest-auth/apple/', CustomAppleLogin.as_view(), name='apple_login'),
 
     path('accounts/', include('allauth.urls')), 
     path('privacy-policy/', views.my_html_view, name='my_html_view'),  # New HTML view
