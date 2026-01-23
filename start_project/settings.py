@@ -14,7 +14,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
-from django.conf import settings  
+from django.conf import settings
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -122,26 +123,17 @@ WSGI_APPLICATION = 'start_project.wsgi.application'
 
 AUTH_USER_MODEL = 'authentication.User'
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('POSTGRES_DB'),
-#         'USER': os.getenv('POSTGRES_USER'),
-#         'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-#         'HOST': os.getenv('POSTGRES_HOST'),
-#         'PORT': os.getenv('POSTGRES_PORT'),
-#     }
-# }
+# Database configuration using DATABASE_URL
+# For local development, set DATABASE_URL in .env file
+# For production, this is set in the environment
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('AWS_NAME'),
-        'USER': os.getenv('AWS_USER'),
-        'PASSWORD': os.getenv('AWS_PASSWORD'),
-        'HOST': os.getenv('AWS_HOST'),
-        'PORT': os.getenv('DB_PORT'),
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/ai_travel'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
+
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', default='')
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
