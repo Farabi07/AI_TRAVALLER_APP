@@ -49,7 +49,7 @@ class Post(models.Model):
 	like = models.PositiveIntegerField(default=0, blank=True, null=True)
 	
 	title = models.CharField(max_length=255, blank=True, null=True)
-	# Keep image_url for external image links and add an ImageField for file uploads
+
 	image_url = models.URLField(max_length=2000, blank=True, null=True)
 	image = models.ImageField(upload_to="posts/", null=True, blank=True)
 	location = models.CharField(max_length=2000, blank=True, null=True)
@@ -57,7 +57,7 @@ class Post(models.Model):
 	longitude = models.FloatField(blank=True, null=True)
 	view_details = models.BooleanField(default=True, blank=True, null=True)
 	share = models.BooleanField(default=True, blank=True, null=True)
-	is_saved = models.BooleanField(default=True, blank=True, null=True)  # <-- rename from 'save'
+	is_saved = models.BooleanField(default=True, blank=True, null=True)  
 	is_shared = models.BooleanField(default=False, blank=True, null=True)
 	regenerate_plan = models.BooleanField(default=True, blank=True, null=True)
 	# Duration broken out for easier querying
