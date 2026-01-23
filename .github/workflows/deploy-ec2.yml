@@ -5,63 +5,13 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key.pem
-        chmod 600 ~/.ssh/deploy_key.pem
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-    
-    - name: Deploy to EC2
-      run: |
-        ssh -i ~/.ssh/deploy_key.pem ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
-          set -e
-          
-          echo "📦 Navigating to application directory..."
-          cd ~/AI-Travel-App
-          
-          echo "🔄 Pulling latest code..."
-          git pull origin main
-          
-          echo "🛑 Stopping containers..."
-          docker-compose -f docker-compose.prod.yml down
-          
-          echo "🔨 Building and starting containers..."
-          docker-compose -f docker-compose.prod.yml up -d --build
-          
-          echo "⏳ Waiting for containers to start..."
-          sleep 30
-          
-          echo "🗄️ Running migrations..."
-          docker-compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
-          
-          echo "📁 Collecting static files..."
-          docker-compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
-          
-          echo "🔍 Checking container status..."
-          docker-compose -f docker-compose.prod.yml ps
-          
-          echo "✅ Deployment completed!"
-        ENDSSH
-    
-    - name: Deployment Summary
-      run: |
-        echo "🎉 Deployment finished!"
-        echo "🌐 Application URL: http://${{ secrets.EC2_HOST }}"
-        echo "⏰ Deployed at: $(date)"
+env:
+  APP_DIR: ~/AI-Travel-App
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -127,7 +77,7 @@ jobs:
             cd ${{ env.APP_DIR }}
             
             echo "🐳 Stopping old containers..."
-            docker-compose -f docker-compose.prod.yml down
+            docker-compose -f docker-compose.prod.yml down || true
             
             echo "🔨 Building new images..."
             docker-compose -f docker-compose.prod.yml build --no-cache
@@ -139,10 +89,10 @@ jobs:
             sleep 10
             
             echo "🗄️  Running migrations..."
-            docker-compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+            docker-compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput || true
             
             echo "📦 Collecting static files..."
-            docker-compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
+            docker-compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput || true
             
             echo "🧹 Cleaning up old Docker images..."
             docker image prune -af
