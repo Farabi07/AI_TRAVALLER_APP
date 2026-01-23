@@ -331,10 +331,11 @@ APPLE_KEY_ID = os.getenv("APPLE_KEY_ID")
 APPLE_BUNDLE_ID = os.getenv("APPLE_BUNDLE_ID")
 APPLE_CALLBACK_URL = os.getenv("APPLE_CALLBACK_URL")
 
-APPLE_PRIVATE_KEY = os.getenv('APPLE_PRIVATE_KEY')
+APPLE_PRIVATE_KEY = os.getenv('APPLE_PRIVATE_KEY', None)
 
-if not APPLE_PRIVATE_KEY:
-    raise ValueError("APPLE_PRIVATE_KEY environment variable is not set.")
+# Only validate APPLE_PRIVATE_KEY if Apple auth is being used
+# if not APPLE_PRIVATE_KEY:
+#     raise ValueError("APPLE_PRIVATE_KEY environment variable is not set.")
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
