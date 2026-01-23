@@ -1,0 +1,62 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+venv
+env
+.venv
+
+# Media and uploads (don't copy to container)
+media/*
+staticfiles/*
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.mp4
+*.pdf
+*.zip
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation
+*.md
+docs/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache
+.tox
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# Other
+*.sqlite3
+db.sqlite3
+node_modules/
