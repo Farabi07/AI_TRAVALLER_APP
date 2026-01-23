@@ -26,8 +26,8 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput || true
+# Skip collectstatic during build - will be done at runtime
+# RUN python manage.py collectstatic --noinput || true
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
