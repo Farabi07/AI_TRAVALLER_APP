@@ -35,24 +35,22 @@ jobs:
             
             echo "📝 Creating .env file..."
             cat > .env << ENVFILE
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          DEBUG=False
-          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-          DJANGO_SETTINGS_MODULE=start_project.settings
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_STORAGE_BUCKET_NAME=${{ secrets.AWS_STORAGE_BUCKET_NAME }}
-          AWS_S3_REGION_NAME=${{ secrets.AWS_S3_REGION_NAME }}
-          EMAIL_HOST=${{ secrets.EMAIL_HOST }}
-          EMAIL_PORT=${{ secrets.EMAIL_PORT }}
-          EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}
-          EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}
-          EMAIL_USE_TLS=True
-          DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}
-          ENVFILE
-            
-            echo "🐳 Stopping old containers..."
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+SECRET_KEY=${{ secrets.SECRET_KEY || 'django-insecure-temp-key-for-deployment-12345' }}
+DEBUG=False
+ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS || '63.177.70.218,localhost,127.0.0.1' }}
+DJANGO_SETTINGS_MODULE=start_project.settings
+AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID || '' }}
+AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY || '' }}
+AWS_STORAGE_BUCKET_NAME=${{ secrets.AWS_STORAGE_BUCKET_NAME || '' }}
+AWS_S3_REGION_NAME=${{ secrets.AWS_S3_REGION_NAME || '' }}
+EMAIL_HOST=${{ secrets.EMAIL_HOST || 'smtp.gmail.com' }}
+EMAIL_PORT=${{ secrets.EMAIL_PORT || '587' }}
+EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER || '' }}
+EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD || '' }}
+EMAIL_USE_TLS=True
+DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL || 'noreply@example.com' }}
+ENVFILE            echo "🐳 Stopping old containers..."
             docker-compose -f docker-compose.prod.yml down || true
             
             echo "🔨 Building new images..."
