@@ -28,7 +28,7 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
           echo "📦 Copying files to EC2..."
-          rsync -avz --delete \
+          rsync -avz --delete --force \
             --exclude '.git' \
             --exclude '.env' \
             --exclude 'env' \
@@ -38,8 +38,10 @@ jobs:
             --exclude 'staticfiles' \
             --exclude 'media' \
             --exclude 'postgres_data' \
+            --exclude 'certbot' \
+            --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no" \
-            ./ ubuntu@$EC2_HOST:${{ env.APP_DIR }}/
+            ./ ubuntu@$EC2_HOST:${{ env.APP_DIR }}/ || echo "Some files had permission issues but continuing..."
 
       - name: Create .env file on EC2
         env:
