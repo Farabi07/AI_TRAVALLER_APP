@@ -23,32 +23,17 @@ jobs:
           chmod 600 ~/.ssh/deploy_key.pem
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy files to EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-        run: |
-          echo "📦 Copying files to EC2..."
-          rsync -avz --delete --force \
-            --exclude '.git' \
-            --exclude '.env' \
-            --exclude 'env' \
-            --exclude 'venv' \
-            --exclude '__pycache__' \
-            --exclude '*.pyc' \
-            --exclude 'staticfiles' \
-            --exclude 'media' \
-            --exclude 'postgres_data' \
-            --exclude 'certbot' \
-            --chmod=D755,F644 \
-            -e "ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no" \
-            ./ ubuntu@$EC2_HOST:${{ env.APP_DIR }}/ || echo "Some files had permission issues but continuing..."
-
-      - name: Create .env file on EC2
+      - name: Deploy to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
           ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no ubuntu@$EC2_HOST << 'EOF'
             cd ${{ env.APP_DIR }}
+            
+            echo "🔄 Pulling latest code..."
+            git pull origin main
+            
+            echo "📝 Creating .env file..."
             cat > .env << ENVFILE
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           SECRET_KEY=${{ secrets.SECRET_KEY }}
@@ -66,14 +51,6 @@ jobs:
           EMAIL_USE_TLS=True
           DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}
           ENVFILE
-          EOF
-
-      - name: Deploy on EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-        run: |
-          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no ubuntu@$EC2_HOST << 'EOF'
-            cd ${{ env.APP_DIR }}
             
             echo "🐳 Stopping old containers..."
             docker-compose -f docker-compose.prod.yml down || true
@@ -85,7 +62,7 @@ jobs:
             docker-compose -f docker-compose.prod.yml up -d
             
             echo "⏳ Waiting for backend to be ready..."
-            sleep 10
+            sleep 15
             
             echo "🗄️  Running migrations..."
             docker-compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput || true
@@ -94,7 +71,7 @@ jobs:
             docker-compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput || true
             
             echo "🧹 Cleaning up old Docker images..."
-            docker image prune -af
+            docker image prune -af || true
             
             echo "📊 Deployment status:"
             docker-compose -f docker-compose.prod.yml ps
