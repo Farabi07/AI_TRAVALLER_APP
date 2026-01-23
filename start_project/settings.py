@@ -24,12 +24,12 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-u-e(&(%d#(e+gj+nel$(-gefvmg$uwr9v747d7c8^&hqo8amh@'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-u-e(&(%d#(e+gj+nel$(-gefvmg$uwr9v747d7c8^&hqo8amh@')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 CORS_ALLOW_ALL_ORIGINS = True
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURE_SSL_REDIRECT = True
