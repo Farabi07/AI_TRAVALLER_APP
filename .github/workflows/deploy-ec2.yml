@@ -25,7 +25,6 @@ jobs:
 
       - name: Copy files to EC2
         env:
-          EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
           echo "📦 Copying files to EC2..."
@@ -40,14 +39,13 @@ jobs:
             --exclude 'media' \
             --exclude 'postgres_data' \
             -e "ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no" \
-            ./ $EC2_USER@$EC2_HOST:${{ env.APP_DIR }}/
+            ./ ubuntu@$EC2_HOST:${{ env.APP_DIR }}/
 
       - name: Create .env file on EC2
         env:
-          EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no ubuntu@$EC2_HOST << 'EOF'
             cd ${{ env.APP_DIR }}
             cat > .env << ENVFILE
           DATABASE_URL=${{ secrets.DATABASE_URL }}
@@ -70,10 +68,9 @@ jobs:
 
       - name: Deploy on EC2
         env:
-          EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no ubuntu@$EC2_HOST << 'EOF'
             cd ${{ env.APP_DIR }}
             
             echo "🐳 Stopping old containers..."
