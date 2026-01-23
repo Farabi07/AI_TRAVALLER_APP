@@ -324,18 +324,6 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_ENDPOINT_SECRET = os.getenv('STRIPE_ENDPOINT_SECRET')
-# Apple Sign-In Configuration
-APPLE_TEAM_ID = os.getenv("APPLE_TEAM_ID")
-APPLE_CLIENT_ID = os.getenv("APPLE_CLIENT_ID")
-APPLE_KEY_ID = os.getenv("APPLE_KEY_ID")
-APPLE_BUNDLE_ID = os.getenv("APPLE_BUNDLE_ID")
-APPLE_CALLBACK_URL = os.getenv("APPLE_CALLBACK_URL")
-
-APPLE_PRIVATE_KEY = os.getenv('APPLE_PRIVATE_KEY', None)
-
-# Only validate APPLE_PRIVATE_KEY if Apple auth is being used
-# if not APPLE_PRIVATE_KEY:
-#     raise ValueError("APPLE_PRIVATE_KEY environment variable is not set.")
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -345,15 +333,6 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         'OAUTH_PKCE_ENABLED': True,
         'FETCH_USERINFO': True,  
-    },
-    'apple': {
-        'APP': {
-            'client_id': APPLE_CLIENT_ID,  # Your APPLE_CLIENT_ID
-            'team_id': APPLE_TEAM_ID,      # Your APPLE_TEAM_ID
-            'key': APPLE_KEY_ID,           # Your APPLE_KEY_ID
-            'secret': APPLE_PRIVATE_KEY,   # Apple private key from the .env file
-        },
-        'SCOPE': ['email', 'name'],  # Directly specify the scope here
     }
 }
 
