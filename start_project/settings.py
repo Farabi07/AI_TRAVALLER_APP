@@ -125,26 +125,35 @@ AUTH_USER_MODEL = 'authentication.User'
 
 # Database configuration
 # Supports both DATABASE_URL and individual AWS_* environment variables
-if os.getenv('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.getenv('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+# if os.getenv('DATABASE_URL'):
+#     DATABASES = {
+#         'default': dj_database_url.config(
+#             default=os.getenv('DATABASE_URL'),
+#             conn_max_age=600,
+#             conn_health_checks=True,
+#         )
+#     }
+# else:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST'),
+        'PORT': os.getenv('POSTGRES_PORT'),
     }
-else:
-    # Fallback to AWS_* environment variables
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('AWS_NAME', 'ai_travel'),
-            'USER': os.getenv('AWS_USER', 'postgres'),
-            'PASSWORD': os.getenv('AWS_PASSWORD', ''),
-            'HOST': os.getenv('AWS_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '5432'),
-        }
-    }
+}
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': os.getenv('AWS_NAME'),
+#             'USER': os.getenv('AWS_USER'),
+#             'PASSWORD': os.getenv('AWS_PASSWORD'),
+#             'HOST': os.getenv('AWS_HOST'),
+#             'PORT': os.getenv('DB_PORT', '5432'),
+#         }
+#     }
 
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', default='')
 # Password validation
