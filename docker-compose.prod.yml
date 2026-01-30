@@ -49,7 +49,7 @@ services:
   nginx:
     image: nginx:alpine
     volumes:
-      - ./nginx-ip-only.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-domain.conf:/etc/nginx/nginx.conf:ro
       - static_volume:/app/static
       - media_volume:/app/media
       - ./certbot/conf:/etc/letsencrypt

@@ -5,11 +5,11 @@
 
 set -e
 
-# Configuration - UPDATE THESE
+# Configuration
 DOMAIN="hitmanjacktravel.com"
-EMAIL="your-email@example.com"  # ⚠️ UPDATE THIS with your actual email
+EMAIL="farhadkabir1212@gmail.com"
 EC2_USER="ubuntu"
-EC2_HOST="63.177.70.218"
+EC2_HOST="YOUR_ELASTIC_IP"  # ⚠️ UPDATE THIS with your Elastic IP
 KEY_PATH="~/.ssh/ai-travel-key.pem"
 APP_DIR="/home/ubuntu/AI-Travel-App"
 
@@ -19,8 +19,8 @@ echo "╚═══════════════════════�
 echo ""
 
 # Validate inputs
-if [ "$DOMAIN" == "your-domain.com" ] || [ "$EMAIL" == "your-email@example.com" ] || [ "$EC2_HOST" == "YOUR_EC2_IP" ]; then
-    echo "❌ Error: Please update DOMAIN, EMAIL, and EC2_HOST in this script"
+if [ "$EC2_HOST" == "YOUR_ELASTIC_IP" ]; then
+    echo "❌ Error: Please update EC2_HOST with your Elastic IP in this script"
     exit 1
 fi
 
