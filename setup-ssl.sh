@@ -9,7 +9,7 @@ set -e
 DOMAIN="hitmanjacktravel.com"
 EMAIL="farhadkabir1212@gmail.com"
 EC2_USER="ubuntu"
-EC2_HOST="YOUR_ELASTIC_IP"  # ⚠️ UPDATE THIS with your Elastic IP
+EC2_HOST="3.66.7.106"
 KEY_PATH="~/.ssh/ai-travel-key.pem"
 APP_DIR="/home/ubuntu/AI-Travel-App"
 
