@@ -115,6 +115,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://3.66.7.106',
     'http://hitmanjacktravel.com',
     'https://hitmanjacktravel.com',
+    'http://www.hitmanjacktravel.com',
+    'https://www.hitmanjacktravel.com',
+    'http://api.hitmanjacktravel.com',
+    'https://api.hitmanjacktravel.com',
 ]
 
 # Database configuration
@@ -149,17 +153,19 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Email Configuration
+# # Email Configuration - Office365 SMTP
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST = 'smtp.office365.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'support@taskmama.app'
+EMAIL_HOST_PASSWORD = 'sgysnqxjtqqqflbj'  # <-- your Office 365 app password
+EMAIL_USE_TLS = True
 
 ADMIN_EMAIL = EMAIL_HOST_USER
 SUPPORT_EMAIL = EMAIL_HOST_USER
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+DEFAULT_FROM_EMAIL = ADMIN_EMAIL
 SERVER_EMAIL = ADMIN_EMAIL
 
 # REST Framework
@@ -176,6 +182,10 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
 }
 
 # API Documentation
