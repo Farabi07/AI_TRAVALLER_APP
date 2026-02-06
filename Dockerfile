@@ -26,11 +26,11 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY . .
 
-# Skip collectstatic during build - will be done at runtime
-# RUN python manage.py collectstatic --noinput || true
+# Create non-root user and set up directories
+RUN useradd -m -u 1000 appuser && \
+    mkdir -p /app/staticfiles /app/media && \
+    chown -R appuser:appuser /app
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Expose port
