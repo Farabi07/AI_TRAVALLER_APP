@@ -27,7 +27,7 @@ services:
              python manage.py collectstatic --noinput &&
              gunicorn start_project.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120"
     volumes:
-      - static_volume:/app/static
+      - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:
       - "8000:8000"
@@ -50,7 +50,7 @@ services:
     image: nginx:alpine
     volumes:
       - ./nginx-domain.conf:/etc/nginx/nginx.conf:ro
-      - static_volume:/app/static
+      - static_volume:/app/staticfiles
       - media_volume:/app/media
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
