@@ -221,6 +221,7 @@ class User(AbstractBaseUser):
     last_name = models.CharField(max_length=100, null=True, blank=True)
     username = models.CharField(max_length=100, null=True, blank=True, unique=True)
     email = models.EmailField(verbose_name='email address', max_length=255, unique=True)
+    is_subscribed = models.BooleanField(default=False)
 
     gender = models.CharField(max_length=6, choices=Gender.choices, default=Gender.MALE,null=True, blank=True)
 
