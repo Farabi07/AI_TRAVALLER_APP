@@ -1,4 +1,6 @@
+from datetime import date
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse
 
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view
@@ -247,4 +249,111 @@ def deleteTrip(request, pk):
 		return Response({'detail': f'Trip id - {pk} is deleted successfully'}, status=status.HTTP_200_OK)
 	except ObjectDoesNotExist:
 		return Response({'detail': f"Trip id - {pk} doesn't exists"}, status=status.HTTP_400_BAD_REQUEST)
+	
+import logging
+from datetime import date
+import requests
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 
+logger = logging.getLogger(__name__)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_card(request):
+    logger.info("=== Generate Card API Called ===")
+    logger.info("Request received: %s", request.data)
+
+    user = request.user
+    prompt = request.data.get('prompt')
+    session_id = request.data.get('session_id', 'default')
+
+    # If prompt is missing, return a bad request response
+    if not prompt:
+        logger.warning("No prompt provided by user %s", user.id)
+        return Response(
+            {"error": "prompt is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Log trial information
+    trial_days_left = user.get_trial_days_left()
+    logger.info("User %s trial days left: %d", user.id, trial_days_left)
+
+    # Log card generation eligibility
+    can_generate, reason = user.can_generate_card()
+    logger.info(
+        "User %s can_generate: %s, reason: %s",
+        user.id,
+        can_generate,
+        reason
+    )
+
+    if not can_generate:
+        logger.warning(
+            "User %s blocked from generating card. Reason: %s",
+            user.id,
+            reason
+        )
+        if reason == "daily_limit":
+            return HttpResponse('"daily limit over"', content_type="text/plain", status=403)
+        elif reason == "trial_ended":
+            return HttpResponse('"trial ended"', content_type="text/plain", status=403)
+        return Response(
+            {"error": reason},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        logger.info("Calling AI server for user %s", user.id)
+
+        # Make the request to the AI server
+        ai_response = requests.post(
+            "https://ai.hitmanjacktravel.com/chat",
+            json={"prompt": prompt, "session_id": session_id},
+            timeout=60
+        )
+
+        # Log the raw response for debugging
+        logger.debug("AI server raw response for user %s: %s", user.id, ai_response.text)
+
+        # Check if the response status is OK
+        if ai_response.status_code != 200:
+            logger.error("AI server returned status %d for user %s", ai_response.status_code, user.id)
+            return Response(
+                {"error": "AI server returned an error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # Try to parse as JSON first
+        try:
+            ai_data = ai_response.json()
+            # Return the exact JSON response from AI
+            response_data = ai_data
+        except ValueError:
+            # If it's plain text, return it as is
+            response_data = ai_response.text
+
+        # Log usage increment
+        today = date.today().isoformat()
+        previous_count = user.card_usage.get(today, 0)
+        user.card_usage[today] = previous_count + 1
+        user.save()
+
+        logger.info(
+            "Card generated successfully for user %s. Today's count: %d",
+            user.id,
+            user.card_usage[today]
+        )
+
+        # Return the AI response directly without wrapping
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except requests.exceptions.RequestException as e:
+        logger.error("AI request failed for user %s. Error: %s", user.id, str(e))
+        return Response(
+            {"error": "AI server request failed"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

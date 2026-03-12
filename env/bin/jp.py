@@ -1,4 +1,4 @@
-#!/home/farabi/Desktop/office projects/task_mama/env/bin/python3
+#!/home/farabi/Desktop/office projects/AI-Travel-App/env/bin/python3
 
 import sys
 import json

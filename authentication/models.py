@@ -16,7 +16,7 @@ from PIL import Image, UnidentifiedImageError
 from rest_framework.serializers import BaseSerializer
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.hashers import make_password, check_password, identify_hasher
-from datetime import timedelta
+from datetime import date, timedelta
 from django.db import transaction
 
 
@@ -247,7 +247,8 @@ class User(AbstractBaseUser):
 
     image = models.ImageField(upload_to="users/", default="users/default_profile_pic.png", null=True, blank=True)
     nid = models.CharField(max_length=32, null=True, blank=True)
-
+    trial_start_date = models.DateField(null=True, blank=True) 
+    card_usage = models.JSONField(default=dict)  
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -333,7 +334,41 @@ class User(AbstractBaseUser):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
+    def get_trial_days_left(self):
+        """Calculate remaining days in the free trial."""
+        if self.trial_start_date:
+            diff = (date.today() - self.trial_start_date).days
+            return max(3 - diff, 0)  # Remaining trial days
+        return 0
 
+    def get_cards_generated_today(self):
+        """Get the number of cards generated today."""
+        today = date.today().isoformat()  # Format as YYYY-MM-DD
+        return self.card_usage.get(today, 0)
+
+    def can_generate_card(self):
+        """Check if the user can generate a new card today."""
+        
+        # ✅ Check if user has active paid subscription - unlimited access
+        try:
+            subscription = self.subscription
+            if subscription.is_subscription_active():
+                return True, "unlimited"  # Paid subscribers have unlimited access
+        except Subscription.DoesNotExist:
+            pass  # No subscription, continue to trial check
+
+        # ✅ New user: start trial automatically
+        if not self.trial_start_date:
+            self.trial_start_date = date.today()
+            self.save(update_fields=["trial_start_date"])
+
+        if self.get_trial_days_left() <= 0:
+            return False, "trial_ended"
+
+        if self.get_cards_generated_today() >= 1:
+            return False, "daily_limit"
+
+        return True, ""
 
 class Employee(models.Model):
     # user = models.OneToOneField(User, on_delete=models.CASCADE,null=True, blank=True, related_name='employee_user')
@@ -573,6 +608,13 @@ class Subscription(models.Model):
         if self.status_is != current_status:
             self.status_is = current_status
             self.save(update_fields=["status_is", "updated_at"])
+        
+        # Sync user.is_subscribed with actual subscription status
+        is_subscribed = self.is_subscription_active()
+        if self.user.is_subscribed != is_subscribed:
+            self.user.is_subscribed = is_subscribed
+            self.user.save(update_fields=['is_subscribed'])
+        
         return self.status_is
     @property
     def status(self):

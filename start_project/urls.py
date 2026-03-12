@@ -9,10 +9,15 @@ from .views import CustomGoogleLogin
 from . import views
 from django.conf import settings # new
 from  django.conf.urls.static import static #new
+from authentication.views import subscription_views
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('', views.index),
+
+    # Stripe Webhook (must be at root level for Stripe to access)
+    path('api/v1/subscription/stripe-webhook/', subscription_views.stripe_webhook, name='stripe_webhook'),
 
     # Authentication module
     path('user/', include('authentication.urls.user_urls')),

@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/home/farabi/Desktop/office projects/task_mama/env/bin/python3" "$0" "$@"
+'''exec' "/home/farabi/Desktop/office projects/AI-Travel-App/env/bin/python3" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re

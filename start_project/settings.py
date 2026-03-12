@@ -151,12 +151,17 @@ CORS_ALLOW_CREDENTIALS = True
 # Email Configuration
 # # Email Configuration - Office365 SMTP
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.office365.com'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'support@taskmama.app'
-EMAIL_HOST_PASSWORD = 'sgysnqxjtqqqflbj'  # <-- your Office 365 app password
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.office365.com'
+# EMAIL_PORT = 587
+EMAIL_HOST_USER= "ferdos.khurrom@gmail.com"
+# EMAIL_HOST_PASSWORD = 'vogi iway mqwc dton'   
+EMAIL_HOST_PASSWORD = 'ephmulfodqekpwgb' 
+# EMAIL_HOST_USER = 'support@taskmama.app'
+# EMAIL_HOST_PASSWORD = 'sgysnqxjtqqqflbj'  # <-- your Office 365 app password
 EMAIL_USE_TLS = True
 
 ADMIN_EMAIL = EMAIL_HOST_USER

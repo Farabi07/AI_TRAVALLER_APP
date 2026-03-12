@@ -19,3 +19,4 @@ postgres_data/
 *.swo
 .coverage
 htmlcov/
+.gitignore

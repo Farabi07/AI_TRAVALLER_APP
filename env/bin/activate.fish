@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV '/home/farabi/Desktop/office projects/task_mama/env'
+set -gx VIRTUAL_ENV '/home/farabi/Desktop/office projects/AI-Travel-App/env'
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH

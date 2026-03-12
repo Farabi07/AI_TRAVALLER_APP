@@ -58,6 +58,7 @@ class CustomGoogleLogin(SocialLoginView):
             "date_of_birth": getattr(user, 'date_of_birth', None),
             "is_active": user.is_active,
             "is_admin": user.is_superuser,
+            "is_subscribed": getattr(user, 'is_subscribed', None),
             "role": getattr(user, 'role', None),
             "street_address_one": getattr(user, 'street_address_one', None),
             "street_address_two": getattr(user, 'street_address_two', None),

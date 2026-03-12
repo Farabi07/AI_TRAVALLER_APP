@@ -17,5 +17,6 @@ urlpatterns = [
 	path('api/v1/trip/update/<int:pk>', views.updateTrip),
 
 	path('api/v1/trip/delete/<int:pk>', views.deleteTrip),
+    path('api/generate-card/', views.generate_card, name='generate_card'),
 
 ]
