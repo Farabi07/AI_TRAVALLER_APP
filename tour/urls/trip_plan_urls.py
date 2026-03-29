@@ -18,5 +18,7 @@ urlpatterns = [
 
 	path('api/v1/trip/delete/<int:pk>', views.deleteTrip),
     path('api/generate-card/', views.generate_card, name='generate_card'),
+	path('api/chat/sessions/', views.get_chat_sessions, name='chat_sessions'),
+	path('api/chat/history/<uuid:session_id>/', views.get_chat_history, name='chat_history'),
 
 ]

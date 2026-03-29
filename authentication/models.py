@@ -248,7 +248,7 @@ class User(AbstractBaseUser):
     image = models.ImageField(upload_to="users/", default="users/default_profile_pic.png", null=True, blank=True)
     nid = models.CharField(max_length=32, null=True, blank=True)
     trial_start_date = models.DateField(null=True, blank=True) 
-    card_usage = models.JSONField(default=dict)  
+    card_usage = models.JSONField(default=dict, blank=True)  # To track daily card generation count, e.g., {"2024-06-01": 2}
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

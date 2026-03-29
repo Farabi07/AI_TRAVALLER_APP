@@ -642,6 +642,7 @@ def get_subscription_status(request):
     try:
         subscription = Subscription.objects.get(user=user)
         subscription.sync_status()
+        has_active_subscription = subscription.is_subscription_active()
         
         # Check if there's a pending checkout (has customer_id but no subscription_id)
         has_pending_checkout = (
@@ -659,13 +660,13 @@ def get_subscription_status(request):
         logger.info(f"  - has_pending_checkout: {has_pending_checkout}")
         
         return Response({
-            'has_active_subscription': subscription.is_subscription_active(),
+            'has_active_subscription': has_active_subscription,
             'has_pending_checkout': has_pending_checkout,
             'trial_days_left': user.get_trial_days_left(),
             'cards_generated_today': user.get_cards_generated_today(),
             'can_generate_card': user.can_generate_card()[0],
             'subscription_status': subscription.status_is,
-            'expires_at': subscription.expires_at,
+            'expires_at': subscription.expires_at if has_active_subscription else None,
             'stripe_customer_id': subscription.stripe_customer_id,
             'stripe_subscription_id': subscription.stripe_subscription_id,
             'user_is_subscribed': user.is_subscribed,
@@ -688,7 +689,7 @@ def get_subscription_status(request):
             'cards_generated_today': user.get_cards_generated_today(),
             'can_generate_card': user.can_generate_card()[0],
             'subscription_status': subscription.status_is,
-            'expires_at': subscription.expires_at,
+            'expires_at': None,
         }, status=200)
 
 

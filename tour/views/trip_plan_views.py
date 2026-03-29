@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import UUID
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 
@@ -6,7 +7,7 @@ from rest_framework import serializers, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from tour.models import Trip, Post
+from tour.models import Trip, Post, ChatSession, ChatMessage
 from tour.serializers import TripSerializer, TripListSerializer
 # from authentication.filters import TripFilter
 from rest_framework.permissions import IsAuthenticated
@@ -251,7 +252,6 @@ def deleteTrip(request, pk):
 		return Response({'detail': f"Trip id - {pk} doesn't exists"}, status=status.HTTP_400_BAD_REQUEST)
 	
 import logging
-from datetime import date
 import requests
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -263,97 +263,164 @@ logger = logging.getLogger(__name__)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def generate_card(request):
-    logger.info("=== Generate Card API Called ===")
-    logger.info("Request received: %s", request.data)
+	logger.info("=== Generate Card API Called ===")
+	logger.info("Request received: %s", request.data)
 
-    user = request.user
-    prompt = request.data.get('prompt')
-    session_id = request.data.get('session_id', 'default')
+	user = request.user
+	prompt = (request.data.get('prompt') or '').strip()
+	session_id = request.data.get('session_id')
 
-    # If prompt is missing, return a bad request response
-    if not prompt:
-        logger.warning("No prompt provided by user %s", user.id)
-        return Response(
-            {"error": "prompt is required"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+	if not prompt:
+		logger.warning("No prompt provided by user %s", user.id)
+		return Response(
+			{"error": "prompt is required"},
+			status=status.HTTP_400_BAD_REQUEST
+		)
 
-    # Log trial information
-    trial_days_left = user.get_trial_days_left()
-    logger.info("User %s trial days left: %d", user.id, trial_days_left)
+	trial_days_left = user.get_trial_days_left()
+	logger.info("User %s trial days left: %d", user.id, trial_days_left)
 
-    # Log card generation eligibility
-    can_generate, reason = user.can_generate_card()
-    logger.info(
-        "User %s can_generate: %s, reason: %s",
-        user.id,
-        can_generate,
-        reason
-    )
+	can_generate, reason = user.can_generate_card()
+	logger.info(
+		"User %s can_generate: %s, reason: %s",
+		user.id,
+		can_generate,
+		reason
+	)
 
-    if not can_generate:
-        logger.warning(
-            "User %s blocked from generating card. Reason: %s",
-            user.id,
-            reason
-        )
-        if reason == "daily_limit":
-            return HttpResponse('"daily limit over"', content_type="text/plain", status=403)
-        elif reason == "trial_ended":
-            return HttpResponse('"trial ended"', content_type="text/plain", status=403)
-        return Response(
-            {"error": reason},
-            status=status.HTTP_403_FORBIDDEN
-        )
+	if not can_generate:
+		logger.warning(
+			"User %s blocked from generating card. Reason: %s",
+			user.id,
+			reason
+		)
+		if reason == "daily_limit":
+			return HttpResponse('"daily limit over"', content_type="text/plain", status=403)
+		if reason == "trial_ended":
+			return HttpResponse('"trial ended"', content_type="text/plain", status=403)
+		return Response(
+			{"error": reason},
+			status=status.HTTP_403_FORBIDDEN
+		)
 
-    try:
-        logger.info("Calling AI server for user %s", user.id)
+	if session_id:
+		try:
+			parsed_session_id = UUID(str(session_id))
+			chat_session = ChatSession.objects.filter(session_id=parsed_session_id, user=user).first()
+			if chat_session is None:
+				return Response({"error": "Invalid session_id"}, status=status.HTTP_400_BAD_REQUEST)
+		except (ValueError, TypeError):
+			return Response({"error": "Invalid session_id"}, status=status.HTTP_400_BAD_REQUEST)
+	else:
+		chat_session = ChatSession.objects.create(user=user)
 
-        # Make the request to the AI server
-        ai_response = requests.post(
-            "https://ai.hitmanjacktravel.com/chat",
-            json={"prompt": prompt, "session_id": session_id},
-            timeout=60
-        )
+	ChatMessage.objects.create(session=chat_session, role=ChatMessage.Role.USER, content=prompt)
 
-        # Log the raw response for debugging
-        logger.debug("AI server raw response for user %s: %s", user.id, ai_response.text)
+	try:
+		logger.info("Calling AI server for user %s", user.id)
+		ai_response = requests.post(
+			"https://ai.hitmanjacktravel.com/chat",
+			json={"prompt": prompt},
+			timeout=60
+		)
 
-        # Check if the response status is OK
-        if ai_response.status_code != 200:
-            logger.error("AI server returned status %d for user %s", ai_response.status_code, user.id)
-            return Response(
-                {"error": "AI server returned an error"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+		logger.debug("AI server raw response for user %s: %s", user.id, ai_response.text)
 
-        # Try to parse as JSON first
-        try:
-            ai_data = ai_response.json()
-            # Return the exact JSON response from AI
-            response_data = ai_data
-        except ValueError:
-            # If it's plain text, return it as is
-            response_data = ai_response.text
+		if ai_response.status_code != 200:
+			logger.error("AI server returned status %d for user %s", ai_response.status_code, user.id)
+			return Response(
+				{"error": "AI server returned an error"},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
 
-        # Log usage increment
-        today = date.today().isoformat()
-        previous_count = user.card_usage.get(today, 0)
-        user.card_usage[today] = previous_count + 1
-        user.save()
+		try:
+			response_data = ai_response.json()
+		except ValueError:
+			response_data = ai_response.text
 
-        logger.info(
-            "Card generated successfully for user %s. Today's count: %d",
-            user.id,
-            user.card_usage[today]
-        )
+		if isinstance(response_data, dict):
+			ai_reply = (
+				response_data.get('reply')
+				or response_data.get('response')
+				or response_data.get('message')
+				or response_data.get('content')
+				or str(response_data)
+			)
+		else:
+			ai_reply = str(response_data)
 
-        # Return the AI response directly without wrapping
-        return Response(response_data, status=status.HTTP_200_OK)
+		ChatMessage.objects.create(session=chat_session, role=ChatMessage.Role.ASSISTANT, content=ai_reply)
 
-    except requests.exceptions.RequestException as e:
-        logger.error("AI request failed for user %s. Error: %s", user.id, str(e))
-        return Response(
-            {"error": "AI server request failed"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+		today = date.today().isoformat()
+		previous_count = user.card_usage.get(today, 0)
+		user.card_usage[today] = previous_count + 1
+		user.save()
+
+		logger.info(
+			"Card generated successfully for user %s. Today's count: %d",
+			user.id,
+			user.card_usage[today]
+		)
+
+		if isinstance(response_data, dict):
+			response_data['session_id'] = str(chat_session.session_id)
+			return Response(response_data, status=status.HTTP_200_OK)
+
+		return Response({
+			'session_id': str(chat_session.session_id),
+			'reply': response_data,
+		}, status=status.HTTP_200_OK)
+
+	except requests.exceptions.RequestException as e:
+		logger.error("AI request failed for user %s. Error: %s", user.id, str(e))
+		return Response(
+			{"error": "AI server request failed"},
+			status=status.HTTP_500_INTERNAL_SERVER_ERROR
+		)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_chat_sessions(request):
+	sessions = ChatSession.objects.filter(user=request.user).order_by('-updated_at')
+	data = []
+
+	for session in sessions:
+		last_message = session.messages.order_by('-id').first()
+		data.append({
+			'session_id': str(session.session_id),
+			'created_at': session.created_at,
+			'updated_at': session.updated_at,
+			'last_message': last_message.content if last_message else '',
+		})
+
+	return Response({'sessions': data}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_chat_history(request, session_id):
+	try:
+		parsed_session_id = UUID(str(session_id))
+	except (ValueError, TypeError):
+		return Response({'error': 'Invalid session_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+	chat_session = ChatSession.objects.filter(session_id=parsed_session_id, user=request.user).first()
+	if chat_session is None:
+		return Response({'error': 'Session not found'}, status=status.HTTP_404_NOT_FOUND)
+
+	messages = chat_session.messages.all()
+	history = [
+		{
+			'id': msg.id,
+			'role': msg.role,
+			'content': msg.content,
+			'created_at': msg.created_at,
+		}
+		for msg in messages
+	]
+
+	return Response({
+		'session_id': str(chat_session.session_id),
+		'messages': history,
+	}, status=status.HTTP_200_OK)
