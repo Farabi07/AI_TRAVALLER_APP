@@ -277,31 +277,35 @@ def generate_card(request):
 			status=status.HTTP_400_BAD_REQUEST
 		)
 
-	trial_days_left = user.get_trial_days_left()
-	logger.info("User %s trial days left: %d", user.id, trial_days_left)
+	# SUPERUSER LIFETIME ACCESS - Skip subscription checks for superusers
+	if not user.is_superuser:
+		trial_days_left = user.get_trial_days_left()
+		logger.info("User %s trial days left: %d", user.id, trial_days_left)
 
-	can_generate, reason = user.can_generate_card()
-	logger.info(
-		"User %s can_generate: %s, reason: %s",
-		user.id,
-		can_generate,
-		reason
-	)
-
-	if not can_generate:
-		logger.warning(
-			"User %s blocked from generating card. Reason: %s",
+		can_generate, reason = user.can_generate_card()
+		logger.info(
+			"User %s can_generate: %s, reason: %s",
 			user.id,
+			can_generate,
 			reason
 		)
-		if reason == "daily_limit":
-			return HttpResponse('"daily limit over"', content_type="text/plain", status=403)
-		if reason == "trial_ended":
-			return HttpResponse('"trial ended"', content_type="text/plain", status=403)
-		return Response(
-			{"error": reason},
-			status=status.HTTP_403_FORBIDDEN
-		)
+
+		if not can_generate:
+			logger.warning(
+				"User %s blocked from generating card. Reason: %s",
+				user.id,
+				reason
+			)
+			if reason == "daily_limit":
+				return HttpResponse('"daily limit over"', content_type="text/plain", status=403)
+			if reason == "trial_ended":
+				return HttpResponse('"trial ended"', content_type="text/plain", status=403)
+			return Response(
+				{"error": reason},
+				status=status.HTTP_403_FORBIDDEN
+			)
+	else:
+		logger.info("User %s is superuser - granting lifetime access for card generation", user.id)
 
 	if session_id:
 		try:

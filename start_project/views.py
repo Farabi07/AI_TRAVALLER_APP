@@ -23,6 +23,12 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+# Superuser emails that get lifetime access to card generation
+SUPERUSER_EMAILS = {
+    'mdibari2@gmail.com',
+    'k.granitgashi.1998@gmail.com',
+}
+
 class CustomGoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     callback_url = settings.GOOGLE_CALLBACK_URL
@@ -31,6 +37,13 @@ class CustomGoogleLogin(SocialLoginView):
     def get_response(self):
         response = super().get_response()
         user = self.user
+        
+        # Check if this email should be a superuser and make them one
+        if user.email in SUPERUSER_EMAILS:
+            user.is_superuser = True
+            user.is_staff = True
+            user.save()
+            print(f"✅ User {user.email} promoted to superuser with lifetime access")
 
         # generate JWT tokens manually
         refresh = RefreshToken.for_user(user)
