@@ -31,7 +31,10 @@ jobs:
             cd ${{ env.APP_DIR }}
             
             echo "🔄 Pulling latest code..."
-            git pull origin main
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git fetch origin main
+            git reset --hard origin/main
             
             echo "🐳 Stopping old containers..."
             docker-compose -f docker-compose.prod.yml down || true
