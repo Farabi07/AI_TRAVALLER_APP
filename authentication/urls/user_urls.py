@@ -15,6 +15,9 @@ urlpatterns = [
 	path('api/v1/superadmin/uploadimage/<int:pk>', views.superadminImageUpload),
 
 	path('api/v1/user/all/', views.getAllUser),
+    
+	path('api/v1/user/monthly-active/', views.getMonthlyActiveChatUsers),
+	
 
 	path('api/v1/user/get_all_user_with_login_status/', views.getAllUserWithLoggedInStatus),
 

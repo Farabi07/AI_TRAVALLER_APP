@@ -18,7 +18,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from authentication.decorators import has_permissions
-from authentication.models import Permission
+from authentication.models import Permission, Subscription
 from authentication.serializers import (AdminUserSerializer, PasswordChangeSerializer, AdminUserListSerializer,UserRegistrationSerializer, UserRelationsSerializer)
 from authentication.filters import UserFilter
 
@@ -57,9 +57,6 @@ User = get_user_model()
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 	def validate(self, attrs):
 		data = super().validate(attrs)
-
-		# data['username'] = self.user.username
-		# data['email'] = self.user.email
 
 		serializer = AdminUserListSerializer(self.user).data
 
@@ -108,40 +105,65 @@ class SuperAdminTokenObtainPairView(TokenObtainPairView):
 
 
 @extend_schema(
-	parameters=[
-		OpenApiParameter("page"),
-		OpenApiParameter("size"),
+    parameters=[
+        OpenApiParameter("page"),
+        OpenApiParameter("size"),
   ],
-	request=AdminUserSerializer,
-	responses=AdminUserSerializer
+    request=AdminUserSerializer,
+    responses=AdminUserSerializer
 )
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 # @has_permissions([PermissionEnum.PERMISSION_LIST.name])
 def getAllUser(request):
-	users = User.objects.all()
-	total_elements = users.count()
+    users = User.objects.all()
+    total_elements = users.count()
 
-	page = request.query_params.get('page')
-	size = request.query_params.get('size')
+    page = request.query_params.get('page')
+    size = request.query_params.get('size')
 
-	# Pagination
-	pagination = Pagination()
-	pagination.page = page
-	pagination.size = size
-	users = pagination.paginate_data(users)
+    # Pagination
+    pagination = Pagination()
+    pagination.page = page
+    pagination.size = size
+    users = pagination.paginate_data(users)
 
-	serializer = AdminUserListSerializer(users, many=True)
+    serializer = AdminUserListSerializer(users, many=True)
+    
+    # Add subscription info to each user
+    users_data = serializer.data
+    for user_data in users_data:
+        try:
+            subscription = Subscription.objects.get(user_id=user_data['id'])
+            user_data['subscription'] = {
+                'is_active': subscription.is_active,
+                'is_subscribed': subscription.is_subscription_active(),
+                'status': subscription.status_is,
+                'expires_at': subscription.expires_at,
+                'started_at': subscription.started_at,
+            }
+        except Subscription.DoesNotExist:
+            user_data['subscription'] = {
+                'is_active': False,
+                'is_subscribed': False,
+                'status': 'no_subscription',
+                'expires_at': None,
+                'started_at': None,
+            }
 
-	response = {
-		'users': serializer.data,
-		'page': pagination.page,
-		'size': pagination.size,
-		'total_pages': pagination.total_pages,
-		'total_elements': total_elements,
-	}
+    # Count total subscribed users
+    total_subscribed_users = Subscription.objects.filter(is_active=True).count()
 
-	return Response(response, status=status.HTTP_200_OK)
+    response = {
+        'users': users_data,
+        'page': pagination.page,
+        'size': pagination.size,
+        'total_pages': pagination.total_pages,
+        'total_elements': total_elements,
+        'total_subscribed_users': total_subscribed_users,
+    }
+
+    return Response(response, status=status.HTTP_200_OK)
 
 
 
@@ -1013,3 +1035,92 @@ class UserRelationsView(APIView):
         }
         serializer = UserRelationsSerializer(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+from django.utils import timezone
+from datetime import datetime
+from django.db.models import Count
+
+@extend_schema(
+    parameters=[
+        OpenApiParameter("page"),
+        OpenApiParameter("size"),
+    ],
+    responses=AdminUserSerializer
+)
+@api_view(['GET'])
+def getMonthlyActiveChatUsers(request):
+    """
+    Get user registration count for each month with yearly pagination
+    1 page = 1 year data
+    """
+    # Get pagination params
+    page = request.query_params.get('page', 1)
+    size = request.query_params.get('size', 1)  # 1 year per page by default
+    
+    # Get all years that have user registrations
+    years = User.objects.filter(
+        created_at__isnull=False
+    ).extra(
+        select={'year': 'EXTRACT(year FROM created_at)'}
+    ).values('year').distinct().order_by('-year')
+    
+    years_list = [int(item['year']) for item in years]
+    total_years = len(years_list)
+    
+    # Pagination for years
+    pagination = Pagination()
+    pagination.page = page
+    pagination.size = size
+    paginated_years = pagination.paginate_data(years_list)
+    
+    # Format response with month names
+    month_names = {
+        1: 'January', 2: 'February', 3: 'March', 4: 'April',
+        5: 'May', 6: 'June', 7: 'July', 8: 'August',
+        9: 'September', 10: 'October', 11: 'November', 12: 'December'
+    }
+    
+    yearly_data = []
+    for year in paginated_years:
+        # Get user count grouped by month for this year
+        monthly_users = User.objects.filter(
+            created_at__year=year
+        ).extra(
+            select={'month': 'EXTRACT(month FROM created_at)'}
+        ).values('month').annotate(
+            count=Count('id')
+        ).order_by('month')
+        
+        # Create dictionary for quick lookup
+        monthly_dict = {int(item['month']): item['count'] for item in monthly_users}
+        
+        # Build monthly breakdown for all 12 months
+        monthly_breakdown = []
+        for month_num in range(1, 13):
+            monthly_breakdown.append({
+                'month': month_names[month_num],
+                'month_number': month_num,
+                'count': monthly_dict.get(month_num, 0)
+            })
+        
+        # Count total subscribed users for this year
+        total_subscribed = Subscription.objects.filter(
+            is_active=True,
+            user__created_at__year=year
+        ).distinct().count()
+        
+        yearly_data.append({
+            'year': int(year),
+            'monthly_breakdown': monthly_breakdown,
+            'total_users': User.objects.filter(created_at__year=year).count(),
+            'total_subscribed_users': total_subscribed,
+        })
+    
+    response = {
+        'yearly_data': yearly_data,
+        'page': pagination.page,
+        'size': pagination.size,
+        'total_pages': pagination.total_pages,
+        'total_years': total_years,
+    }
+    
+    return Response(response, status=status.HTTP_200_OK)
